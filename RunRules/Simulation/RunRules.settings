@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<buildProfile>
+<common>
+<boardModel type="VECTIS"/>
+<simulation enabled="true"/>
+<enableMPCX enabled="false"/>
+</common>
+<maxFiles>
+<maxFile buildName="hough_transform" buildOrUseExisting="build">
+<runConfiguration askBeforeAutoBuild="false">
+<mainClass>hough_tansform.HTManager</mainClass>
+<maxHeapSize>2</maxHeapSize>
+<environmentVariable name="MAXELEROSDIR" value="/opt/maxcompiler/lib/maxeleros-sim"/>
+</runConfiguration>
+<selectEngineTarget enabled="false">VECTIS</selectEngineTarget>
+<overrideEnableMPCX enabled="false" value="false"/>
+</maxFile>
+</maxFiles>
+<cpuCode targetType="executable">
+<libraryName/>
+<exeName>DefaultApplication</exeName>
+<skin>
+<ancillaryReleaseInformation enabled="false">
+<dir name=""/>
+</ancillaryReleaseInformation>
+</skin>
+<environmentVariable name="MAXELEROSDIR" value="/opt/maxcompiler/lib/maxeleros-sim/"/>
+<arguments/>
+<remoteExecution enabled="false">
+<remoteMachineName/>
+<scriptName/>
+</remoteExecution>
+<customDefinitions/>
+</cpuCode>
+<simulator>
+<deleteDRAM enabled="false"/>
+<maxDRAMSize enabled="false"/>
+<DRAMFile enabled="false"/>
+<socketName>TestSimulation</socketName>
+<startStopScript enabled="false"/>
+<numberOfDevices>1</numberOfDevices>
+<ethernetOneEnabled enabled="false"/>
+<ipAddressOne/>
+<netmaskOne/>
+<pcapFileOne/>
+<ethernetTwoEnabled enabled="false"/>
+<ipAddressTwo/>
+<netmaskTwo/>
+<pcapFileTwo/>
+</simulator>
+</buildProfile>

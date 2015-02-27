@@ -1,0 +1,5 @@
+#
+# This file is managed by MaxIDE. Do NOT change.
+#
+HEADERS:= bitmapUtils.h 
+SOURCES:= arrayToBitmap.c bitmapToArray.c main.c 

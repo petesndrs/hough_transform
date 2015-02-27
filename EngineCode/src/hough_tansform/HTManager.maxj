@@ -1,0 +1,43 @@
+package hough_tansform;
+
+import com.maxeler.maxcompiler.v2.build.EngineParameters;
+import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.CPUTypes;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface;
+import com.maxeler.maxcompiler.v2.managers.engine_interfaces.InterfaceParam;
+import com.maxeler.maxcompiler.v2.managers.standard.Manager;
+import com.maxeler.maxcompiler.v2.managers.standard.Manager.IOType;
+
+public class HTManager {
+
+	private static int maxSize = 256*256;
+	private static int maxAxis = 256;
+	private static int numAngles = 128;
+
+	public static void main(String[] args) {
+		Manager man = new Manager(new EngineParameters(args));
+		Kernel kern = new HTKernel(man.makeKernelParameters(), maxSize, maxAxis, numAngles);
+		man.setKernel(kern);
+		man.addMaxFileConstant("maxSize", maxSize);
+		man.addMaxFileConstant("maxAxis", maxAxis);
+		man.addMaxFileConstant("numAngles", numAngles);
+		man.setIO(IOType.ALL_CPU);
+		man.createSLiCinterface(modeDefault());
+		man.build();
+	}
+
+	private static EngineInterface modeDefault() {
+		EngineInterface ei = new EngineInterface();
+
+		InterfaceParam n = ei.addParam("N", CPUTypes.INT);
+		ei.setTicks("hough_transformKernel", (n * numAngles) + (2 * maxAxis * numAngles));
+
+		CPUTypes outputType = CPUTypes.UINT32;
+		int outputSizeBytes = 2 * maxAxis * numAngles * outputType.sizeInBytes();
+		ei.setStream("outputA", outputType, outputSizeBytes);
+
+//		ei.ignoreMem("TestKernel", "mappedRom2", Direction.OUT);
+		return ei;
+	}
+
+}

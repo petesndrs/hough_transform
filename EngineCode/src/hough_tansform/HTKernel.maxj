@@ -1,0 +1,100 @@
+package hough_tansform;
+
+import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;
+import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Count.Counter;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.CounterChain;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Stream;
+import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.memory.Memory;
+import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;
+import com.maxeler.maxcompiler.v2.utils.MathUtils;
+
+public class HTKernel extends Kernel {
+	HTKernel(KernelParameters parameters, int dataSize, int maxAxis, int num_angles) {
+		super(parameters);
+
+		// Scalar Input
+		DFEVar x = io.scalarInput("x", dfeUInt(16));
+		DFEVar y = io.scalarInput("y", dfeUInt(16));
+
+		// Create a mapped ROM to hold the input image
+		Memory<DFEVar> mappedRom = mem.alloc(dfeUInt(32), dataSize);
+		mappedRom.mapToCPU("mappedRom");
+		int inputaddrBits = MathUtils.bitsToAddress(dataSize);
+
+		// Create a mapped RAM to hold the transformation
+		Memory<DFEVar> mappedRom2 = mem.alloc(dfeUInt(32), num_angles * 2 * maxAxis);
+		mappedRom2.mapToCPU("mappedRom2");
+		int transaddrBits = MathUtils.bitsToAddress(num_angles * 2 * maxAxis);
+
+		// Create a mapped ROM to hold the trig values
+		double sin[] = new double[num_angles];
+		double cos[] = new double[num_angles];
+		double increment = Math.PI/num_angles;
+		for (int i = 0; i < num_angles; i++) {
+			sin[i] = Math.sin(increment * i);
+			cos[i] = Math.cos(increment * i);
+		}
+
+		Memory<DFEVar> sin_angle = mem.alloc(dfeFloat(8,24), num_angles);
+		sin_angle.setContents(sin);
+		Memory<DFEVar> cos_angle = mem.alloc(dfeFloat(8,24), num_angles);
+		cos_angle.setContents(cos);
+		int trigaddressbits = MathUtils.bitsToAddress(num_angles);
+
+		// Counter for address into the array
+		CounterChain chain = control.count.makeCounterChain();
+		DFEVar finish = chain.addCounter(2, 1); // Need to maxcount
+		DFEVar yCounter = chain.addCounter(y, 1);
+		DFEVar xCounter = chain.addCounter(x, 1);
+
+		DFEVar readAddressWide = yCounter*x + xCounter;
+		DFEVar readAddress = readAddressWide.cast(dfeUInt(inputaddrBits));
+
+		// Output
+		DFEVar readA = mappedRom.read(readAddress);
+
+		//debug.simPrintf("finish %d x %d y %d data %d\n", finish, xCounter, yCounter, readA);
+
+		DFEVar ang = chain.addCounter(num_angles, 1);
+		DFEVar cossinaddr = ang.cast(dfeUInt(trigaddressbits));
+		DFEVar cosAng = cos_angle.read(cossinaddr);
+		DFEVar sinAng = sin_angle.read(cossinaddr);
+
+		DFEVar y_float = yCounter.cast(dfeFloat(8,24));
+		DFEVar x_float = xCounter.cast(dfeFloat(8,24));
+		DFEVar r = x_float*cosAng + y_float*sinAng + maxAxis;
+
+		//DFEVar r_int = constant.var(dfeUInt(32), 5);
+		DFEVar r_int = r.cast(dfeUInt(32));
+//		debug.simPrintf("r %f r_int %d ang %d\n", r, r_int, ang);
+
+		// calculate the transform address to modify
+		DFEVar transAddressWide = (r_int*num_angles) + ang.cast(dfeUInt(32));
+		DFEVar transAddress = transAddressWide.cast(dfeUInt(transaddrBits));
+
+		DFEVar t = finish < 1;
+//		DFEVar t = (readAddressWide & 1) > 0;
+//		DFEVar not_t = (readAddressWide & 1) < 1;
+		DFEVar readD = mappedRom2.read(transAddress);
+//		DFEVar readAD = readD + readA;
+		DFEVar readAD = readA + readD;
+		Stream.OffsetExpr offset = stream.measureDistance("fmemUpdateoffset", transAddress, readAD);
+		mappedRom2.write(stream.offset(transAddress, -offset), stream.offset(readAD, -offset), t);
+
+
+
+		Count.Params paramsOne = control.count.makeParams(transaddrBits)
+			.withEnable(finish)
+			.withMax(num_angles * 2 * maxAxis)
+			.withInc(1);
+		Counter counterOne = control.count.makeCounter(paramsOne);
+		DFEVar readAddress2 = counterOne.getCount();
+
+		// Read the transformation
+		DFEVar readOut = mappedRom2.read(readAddress2);
+
+		io.output("outputA", readOut, dfeUInt(32), finish > 0);
+	}
+}

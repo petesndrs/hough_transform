@@ -1,0 +1,17 @@
+# --- User's custom definitions
+
+# ---
+
+MAXCOMPILER_QUOTE   := $(shell printf %q "$(MAXCOMPILERDIR)")
+
+RUNRULE_ARGS        := 
+RUNRULE_RUNENV      :=  MAXELEROSDIR='/opt/maxcompiler/lib/maxeleros-sim/' MAXELEROSDIR="$(MAXCOMPILERDIR)/lib/maxeleros-sim" LD_LIBRARY_PATH="$(MAXCOMPILERDIR)/lib/maxeleros-sim/lib:$$LD_LIBRARY_PATH" SLIC_CONF="use_simulation=TestSimulation;"  
+RUNRULE_MAXFILES    := hough_transform.max  
+RUNRULE_MAXFILES_H  := hough_transform.h 
+RUNRULE_CFLAGS      := 
+RUNRULE_LDFLAGS     := 
+
+TARGET_EXEC         := DefaultApplication
+TARGET_LIBRARY      := 
+
+

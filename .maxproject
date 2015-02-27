@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<maxCompilerManager version="2">
+<enginePart internalEngineSubproject="hough_transform_EngineCode" isSrcBin="false" isUseDefaultSelected="false" outputLocation="/hough_transform_EngineCode/bin" projectName="hough_transform"/>
+<cpuPart internalCpuSubproject="hough_transform_CPUCode"/>
+<watchedFiles/>
+</maxCompilerManager>
